@@ -12,7 +12,7 @@ const bq = new BigQuery({ projectId: PROJECT_ID });
 const cache = new NodeCache({ stdTTL: 600 });
 
 const PORT = process.env.PORT || 8080;
-const USERS = { brad: 'brand', fixmart: 'fixmart' };
+const USERS = { brad: 'brad', fixmart: 'fixmart' };
 
 app.set('trust proxy', 1);
 app.use(express.json());
