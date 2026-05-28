@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fixmart &mdash; Procurement Trends</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--lime:#9ACD00;--navy:#1B365D;--black:#1a1a1a;--offwhite:#f5f5f3;--border:#e0e0e0;--muted:#666;--surface:#fff;--red:#dc2626;--green:#16a34a;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Barlow',sans-serif;background:var(--offwhite);color:var(--black);}
+  .header{background:var(--black);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;border-bottom:3px solid var(--lime);}
+  .header-left{display:flex;align-items:center;gap:16px;}
+  .hdiv{width:1px;height:26px;background:rgba(255,255,255,0.15);}
+  .htitle{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:600;color:rgba(255,255,255,0.45);letter-spacing:0.1em;text-transform:uppercase;}
+  .header-right{display:flex;align-items:center;gap:12px;}
+  .nav-tabs{display:flex;gap:4px;}
+  .nav-tab{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:rgba(255,255,255,0.45);text-decoration:none;padding:6px 16px;border-radius:4px;border:1px solid rgba(255,255,255,0.1);}
+  .nav-tab:hover{color:#fff;background:rgba(255,255,255,0.08);}
+  .nav-tab.active{background:var(--lime);color:var(--black);border-color:var(--lime);}
+  .logout-btn{color:rgba(255,255,255,0.35);text-decoration:none;font-size:12px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.06em;text-transform:uppercase;}
+  .logout-btn:hover{color:rgba(255,255,255,0.7);}
+  .main{padding:20px 24px;}
+  .section-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:12px;margin-top:24px;}
+  .section-title:first-child{margin-top:0;}
+  .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:20px 24px;margin-bottom:16px;}
+  .chart-title{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--black);margin-bottom:16px;}
+  .chart-wrap{position:relative;width:100%;overflow-x:auto;}
+  svg text{font-family:'Barlow',sans-serif;}
+  .loading{text-align:center;padding:40px;color:var(--muted);font-size:14px;}
+  .spin{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--lime);border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .legend{display:flex;flex-wrap:wrap;gap:10px 20px;margin-top:12px;}
+  .leg-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);}
+  .leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+  .smgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#fff">fix<span style="color:#9ACD00">mart</span></div>
+    <div class="hdiv"></div>
+    <div class="htitle">Procurement P&amp;L</div>
+  </div>
+  <div class="header-right">
+    <div class="nav-tabs">
+      <a href="/" class="nav-tab">P&amp;L</a>
+      <a href="/trends" class="nav-tab active">Trends</a>
+    </div>
+    <div class="hdiv"></div>
+    <a href="/logout" class="logout-btn">Sign Out</a>
+  </div>
+</div>
+<div class="main">
+  <div id="trends-content"><div class="loading"><span class="spin"></span>Loading trend data...</div></div>
+</div>
+<script>
+var GROUPS=[
+  {id:'stock',label:'Stock Purchases',color:'#1B365D'},
+  {id:'imports',label:'Import Costs',color:'#3b6cb7'},
+  {id:'discounts',label:'Discounts & Rebates',color:'#16a34a'},
+  {id:'tpl',label:'3PL & Container Handling',color:'#d97706'},
+  {id:'people',label:'Procurement People',color:'#7c3aed'},
+  {id:'travel',label:'Procurement Travel',color:'#dc2626'}
+];
+var SEC_MAP={
+  'Stock Purchases':'stock','Import Costs':'imports','Discounts & Rebates':'discounts',
+  '3PL & Container Handling':'tpl','Procurement People':'people','Procurement Travel':'travel'
+};
+function fmtM(ym){var p=ym.split('-');var ms=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return ms[parseInt(p[1],10)-1]+' '+p[0].slice(2);}
+function fvk(n){var a=Math.abs(n);if(a>=1000)return(n<0?'-':'')+'£'+(a/1000).toFixed(0)+'k';return(n<0?'-':'')+'£'+a.toFixed(0);}
+async function loadTrends(){
+  try{
+    var res=await fetch('/api/trend');
+    var json=await res.json();
+    if(json.error==='session_expired'){window.location.href='/login.html';return;}
+    if(!json.success)throw new Error(json.error||'Failed');
+    render(json.data);
+  }catch(err){
+    document.getElementById('trends-content').innerHTML='<div class="loading" style="color:#dc2626">Error: '+err.message+'</div>';
+  }
+}
+function render(data){
+  var mSet=new Set();
+  data.forEach(function(r){if(r.period_date)mSet.add(r.period_date.slice(0,7));});
+  var months=Array.from(mSet).sort();
+  var bySecMo={};
+  data.forEach(function(r){
+    var m=r.period_date?r.period_date.slice(0,7):'',sec=r.section;
+    if(!bySecMo[sec])bySecMo[sec]={};
+    bySecMo[sec][m]=(bySecMo[sec][m]||0)+r.total;
+  });
+  var byGrpMo={};
+  GROUPS.forEach(function(g){byGrpMo[g.id]={};months.forEach(function(m){byGrpMo[g.id][m]=0;});});
+  Object.keys(bySecMo).forEach(function(sec){
+    var gid=SEC_MAP[sec];if(!gid)return;
+    months.forEach(function(m){byGrpMo[gid][m]=(byGrpMo[gid][m]||0)+(bySecMo[sec][m]||0);});
+  });
+  var html='';
+  html+='<div class="section-title">Total Procurement Cost by Group</div>';
+  html+='<div class="chart-card"><div class="chart-title">Monthly Cost Breakdown</div>';
+  html+=renderStackedBar(months,byGrpMo);
+  html+='</div>';
+  html+='<div class="section-title">Cost Group Trends</div>';
+  html+='<div class="smgrid">';
+  GROUPS.forEach(function(g){
+    var vals=months.map(function(m){return byGrpMo[g.id][m]||0;});
+    html+='<div class="chart-card"><div class="chart-title">'+g.label+'</div>';
+    html+=renderSparkline(months,vals,g.color);
+    html+='</div>';
+  });
+  html+='</div>';
+  document.getElementById('trends-content').innerHTML=html;
+}
+function renderStackedBar(months,byGrpMo){
+  var W=Math.max(900,months.length*70),H=280,PL=60,PR=20,PT=20,PB=50;
+  var cW=W-PL-PR,cH=H-PT-PB;
+  var bW=Math.min(40,cW/months.length*0.7);
+  var maxT=0;
+  months.forEach(function(m){
+    var t=GROUPS.reduce(function(s,g){return s+Math.abs(byGrpMo[g.id][m]||0);},0);
+    if(t>maxT)maxT=t;
+  });
+  if(!maxT)maxT=1;
+  var svg='<div class="chart-wrap"><svg viewBox="0 0 '+W+' '+H+'" style="width:100%;min-width:'+W+'px">';
+  for(var i=0;i<=4;i++){
+    var yv=maxT*i/4;
+    var yp=PT+cH-cH*(yv/maxT);
+    svg+='<line x1="'+PL+'" y1="'+yp+'" x2="'+(W-PR)+'" y2="'+yp+'" stroke="#e8e8e8" stroke-width="1"/>';
+    svg+='<text x="'+(PL-6)+'" y="'+(yp+4)+'" text-anchor="end" font-size="10" fill="#999">'+fvk(yv)+'</text>';
+  }
+  months.forEach(function(m,i){
+    var x=PL+i*(cW/months.length)+(cW/months.length-bW)/2;
+    var yOff=0;
+    GROUPS.forEach(function(g){
+      var v=Math.abs(byGrpMo[g.id][m]||0);
+      if(!v)return;
+      var bH=cH*(v/maxT);
+      var y=PT+cH-yOff-bH;
+      svg+='<rect x="'+x+'" y="'+y+'" width="'+bW+'" height="'+bH+'" fill="'+g.color+'" opacity="0.85"/>';
+      yOff+=bH;
+    });
+    if(i%2===0||months.length<=12){
+      svg+='<text x="'+(x+bW/2)+'" y="'+(H-PB+16)+'" text-anchor="middle" font-size="10" fill="#888">'+fmtM(m)+'</text>';
+    }
+  });
+  svg+='</svg></div>';
+  svg+='<div class="legend">';
+  GROUPS.forEach(function(g){svg+='<div class="leg-item"><div class="leg-dot" style="background:'+g.color+'"></div>'+g.label+'</div>';});
+  svg+='</div>';
+  return svg;
+}
+function renderSparkline(months,vals,color){
+  var W=320,H=100,PL=44,PR=10,PT=10,PB=24;
+  var cW=W-PL-PR,cH=H-PT-PB;
+  var allV=vals.filter(function(v){return v!==0;});
+  var minV=allV.length?Math.min.apply(null,allV.map(Math.abs)):0;
+  var maxV=allV.length?Math.max.apply(null,allV.map(Math.abs)):1;
+  if(maxV===minV)maxV=minV+1;
+  function xp(i){return PL+i*(cW/(months.length-1||1));}
+  function yp(v){return PT+cH-cH*(Math.abs(v)-minV)/(maxV-minV);}
+  var pts=months.map(function(m,i){return xp(i)+','+yp(vals[i]);}).join(' ');
+  var svg='<div class="chart-wrap"><svg viewBox="0 0 '+W+' '+H+'" style="width:100%">';
+  svg+='<line x1="'+PL+'" y1="'+(PT+cH)+'" x2="'+(W-PR)+'" y2="'+(PT+cH)+'" stroke="#e8e8e8" stroke-width="1"/>';
+  svg+='<text x="'+(PL-4)+'" y="'+(PT+8)+'" text-anchor="end" font-size="9" fill="#bbb">'+fvk(maxV)+'</text>';
+  svg+='<text x="'+(PL-4)+'" y="'+(PT+cH)+'" text-anchor="end" font-size="9" fill="#bbb">'+fvk(minV)+'</text>';
+  svg+='<polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linejoin="round"/>';
+  months.forEach(function(m,i){
+    if(vals[i]!==0)svg+='<circle cx="'+xp(i)+'" cy="'+yp(vals[i])+'" r="2.5" fill="'+color+'"/>';
+  });
+  if(months.length>0){
+    svg+='<text x="'+xp(0)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" fill="#aaa">'+fmtM(months[0])+'</text>';
+    if(months.length>1)svg+='<text x="'+xp(months.length-1)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" fill="#aaa">'+fmtM(months[months.length-1])+'</text>';
+  }
+  svg+='</svg></div>';
+  return svg;
+}
+loadTrends();
+</script>
+</body>
+</html>
