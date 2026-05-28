@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fixmart Procurement P&L — Sign In</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Barlow', sans-serif; background: #1a1a1a; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .card { background: #fff; border-radius: 8px; padding: 40px 36px; width: 340px; border-top: 4px solid #9ACD00; }
+  .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+  .logo-circle { width: 38px; height: 38px; background: #9ACD00; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .logo-f { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 800; color: #fff; }
+  .logo-text { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800; color: #1a1a1a; letter-spacing: 0.02em; text-transform: lowercase; }
+  .logo-text span { color: #9ACD00; }
+  h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; letter-spacing: 0.03em; }
+  .sub { font-size: 13px; color: #888; margin-bottom: 24px; }
+  label { display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.07em; }
+  input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; font-family: 'Barlow', sans-serif; margin-bottom: 16px; outline: none; transition: border-color 0.15s; }
+  input:focus { border-color: #9ACD00; }
+  button { width: 100%; padding: 11px; background: #9ACD00; color: #1a1a1a; border: none; border-radius: 5px; font-size: 15px; font-weight: 700; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.06em; cursor: pointer; text-transform: uppercase; }
+  button:hover { background: #7aaa00; }
+  .err { background: #fef2f2; border: 1px solid #fca5a5; color: #dc2626; border-radius: 5px; padding: 9px 12px; font-size: 13px; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-circle"><span class="logo-f">F</span></div>
+    <div class="logo-text">fix<span>mart</span></div>
+  </div>
+  <h2>Procurement P&amp;L</h2>
+  <p class="sub">Sign in to continue</p>
+  <form method="POST" action="/login">
+    <div id="err-box" class="err" style="display:none">Incorrect username or password</div>
+    <label>Username</label>
+    <input type="text" name="username" autocomplete="username" autofocus>
+    <label>Password</label>
+    <input type="password" name="password" autocomplete="current-password">
+    <button type="submit">Sign In</button>
+  </form>
+</div>
+<script>
+  if (window.location.search.includes('error=1')) {
+    document.getElementById('err-box').style.display = 'block';
+  }
+</script>
+</body>
+</html>
