@@ -32,9 +32,12 @@
   .tbtn.active{background:var(--lime);color:var(--black);}
   .fsel{font-family:'Barlow',sans-serif;font-size:13px;color:#fff;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;padding:4px 9px;cursor:pointer;outline:none;color-scheme:dark;}
   .abtn{padding:5px 16px;font-size:13px;font-weight:700;font-family:'Barlow Condensed',sans-serif;cursor:pointer;background:var(--lime);color:var(--black);border:none;border-radius:4px;}
+  .legend{display:flex;align-items:center;gap:16px;margin-bottom:10px;}
+  .legend-item{display:flex;align-items:center;gap:6px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;}
+  .legend-dot{width:12px;height:12px;border-radius:2px;}
   .section-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--black);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:12px;}
   .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:20px;margin-bottom:16px;}
-  .chart-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--black);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px;}
+  .chart-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--black);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;}
   .chart-wrap{position:relative;height:260px;}
   .small-multiples{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;}
   .sm-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px;}
@@ -82,6 +85,11 @@
   <div id="content" style="display:none">
     <div class="chart-card">
       <div class="chart-title">Total Controllable Procurement Cost</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#1B365D"></div>Actual</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(154,205,0,0.75)"></div>Reforecast</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#94a3b8"></div>Historic actual</div>
+      </div>
       <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
     </div>
     <div class="section-title" style="margin-bottom:12px">Cost by Group</div>
@@ -90,6 +98,7 @@
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
+var RF_START='2026-05';
 var GROUPS=[
   {id:'discounts',label:'Discounts & Rebates'},
   {id:'tpl',label:'3PL & Container Handling'},
@@ -98,53 +107,96 @@ var GROUPS=[
 ];
 var CREDIT_SECTIONS=new Set(['Discounts & Rebates']);
 var NAVY='#1B365D';
+var LIME='rgba(154,205,0,0.75)';
 var GREY='#94a3b8';
-var allData=[];
+var allActuals=[];
+var allRf=[];
 var mainChartInst=null;
 var smChartInsts=[];
 function toMS(d){return d.toISOString().slice(0,7);}
 function fmtM(ym){var p=ym.slice(0,7).split('-');var ms=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return ms[parseInt(p[1],10)-1]+' '+p[0].slice(2);}
 function fmtK(n){var a=Math.abs(n);return a>=1000?'\u00a3'+(a/1000).toFixed(0)+'k':'\u00a3'+a.toFixed(0);}
+function adjAmt(section,v){return CREDIT_SECTIONS.has(section)?-v:v;}
 function setAll(){document.getElementById('month-from').value='2025-01';document.getElementById('month-to').value=toMS(new Date());setAP('all');renderCharts();}
 function setMonths(n){var to=new Date(),from=new Date();from.setMonth(from.getMonth()-n+1);from.setDate(1);document.getElementById('month-from').value=toMS(from);document.getElementById('month-to').value=toMS(to);setAP(n+'m');renderCharts();}
 function applyRange(){setAP(null);renderCharts();}
 function setAP(id){document.querySelectorAll('.tbtn').forEach(function(b){b.classList.remove('active');});if(id){var el=document.getElementById('btn-'+id);if(el)el.classList.add('active');}}
-function getFilteredPeriods(){var fm=document.getElementById('month-from').value,tm=document.getElementById('month-to').value;if(!fm||!tm)return null;return [...new Set(allData.map(function(r){return r.period_date.slice(0,7);}))].sort().filter(function(p){return p>=fm&&p<=tm;});}
-function adjAmt(section,v){return CREDIT_SECTIONS.has(section)?-v:v;}
-function groupTotal(group,period){var t=0;allData.filter(function(r){return r.period_date.slice(0,7)===period&&r.section===group.label;}).forEach(function(r){t+=adjAmt(r.section,r.total);});return Math.round(t);}
+function getFilteredPeriods(){
+  var fm=document.getElementById('month-from').value,tm=document.getElementById('month-to').value;
+  if(!fm||!tm)return null;
+  var pSet=new Set();
+  allActuals.forEach(function(r){pSet.add(r.period_date.slice(0,7));});
+  allRf.forEach(function(r){pSet.add(r.period_date.slice(0,7));});
+  return Array.from(pSet).sort().filter(function(p){return p>=fm&&p<=tm;});
+}
+function groupActual(groupLabel,period){
+  var t=0;
+  allActuals.filter(function(r){return r.period_date.slice(0,7)===period&&r.section===groupLabel;})
+    .forEach(function(r){t+=adjAmt(r.section,r.total);});
+  return Math.round(t);
+}
+function groupRf(groupLabel,period){
+  var t=0;
+  allRf.filter(function(r){return r.period_date.slice(0,7)===period&&r.cost_group===groupLabel;})
+    .forEach(function(r){t+=r.reforecast||0;});
+  return Math.round(t);
+}
 function renderCharts(){
   var periods=getFilteredPeriods();
   if(!periods||!periods.length)return;
   var labels=periods.map(function(p){return fmtM(p);});
-  var recentIdx=periods.length-8;
-  var totals=periods.map(function(p){var t=0;GROUPS.forEach(function(g){t+=groupTotal(g,p);});return t;});
+  var hasRf=periods.some(function(p){return p>=RF_START;});
+  var totActData=[],totRfData=[],totActColors=[];
+  periods.forEach(function(p){
+    var isRf=p>=RF_START,tAct=0,tRf=0;
+    GROUPS.forEach(function(g){tAct+=groupActual(g.label,p);if(isRf)tRf+=groupRf(g.label,p);});
+    totActData.push(tAct);
+    totRfData.push(isRf?tRf:null);
+    totActColors.push(isRf?NAVY:(p>='2025-09'?NAVY:GREY));
+  });
+  var mainDs=[{label:'Actual',data:totActData,backgroundColor:totActColors,borderRadius:2,order:1}];
+  if(hasRf)mainDs.push({label:'Reforecast',data:totRfData,backgroundColor:LIME,borderRadius:2,order:2});
   if(mainChartInst){mainChartInst.destroy();mainChartInst=null;}
-  mainChartInst=new Chart(document.getElementById('mainChart'),{type:'bar',data:{labels:labels,datasets:[{label:'Total',data:totals,backgroundColor:periods.map(function(_,i){return i>=recentIdx?NAVY:GREY;}),borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return '\u00a3'+c.raw.toLocaleString('en-GB');}}}},scales:{x:{grid:{display:false},ticks:{font:{size:11},color:'#666'}},y:{grid:{color:'#f0f2f5'},ticks:{callback:function(v){return fmtK(v);},font:{size:11},color:'#666'},border:{display:false}}}}});
+  mainChartInst=new Chart(document.getElementById('mainChart'),{type:'bar',data:{labels:labels,datasets:mainDs},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.dataset.label+': \u00a3'+Math.abs(c.raw||0).toLocaleString('en-GB');}}}},scales:{x:{grid:{display:false},ticks:{font:{size:11},color:'#666'}},y:{grid:{color:'#f0f2f5'},ticks:{callback:function(v){return fmtK(v);},font:{size:11},color:'#666'},border:{display:false}}}}});
   smChartInsts.forEach(function(c){c.destroy();});smChartInsts=[];
   var sm=document.getElementById('smallMultiples');sm.innerHTML='';
   GROUPS.forEach(function(group){
-    var vals=periods.map(function(p){return groupTotal(group,p);});
+    var actData=[],rfData=[],actColors=[];
+    periods.forEach(function(p){
+      var isRf=p>=RF_START;
+      actData.push(groupActual(group.label,p));
+      rfData.push(isRf?groupRf(group.label,p):null);
+      actColors.push(isRf?NAVY:(p>='2025-09'?NAVY:GREY));
+    });
+    var ds=[{label:'Actual',data:actData,backgroundColor:actColors,borderRadius:2,order:1}];
+    if(hasRf)ds.push({label:'Reforecast',data:rfData,backgroundColor:LIME,borderRadius:2,order:2});
     var div=document.createElement('div');div.className='sm-card';
     var wrap=document.createElement('div');wrap.className='sm-wrap';
     var canvas=document.createElement('canvas');
     div.innerHTML='<div class="sm-title">'+group.label+'</div>';
     wrap.appendChild(canvas);div.appendChild(wrap);sm.appendChild(div);
-    var inst=new Chart(canvas,{type:'bar',data:{labels:labels,datasets:[{data:vals,backgroundColor:periods.map(function(_,i){return i>=recentIdx?NAVY:GREY;}),borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return '\u00a3'+c.raw.toLocaleString('en-GB');}}}},scales:{x:{grid:{display:false},ticks:{font:{size:9},color:'#666'}},y:{grid:{color:'#f0f2f5'},ticks:{callback:function(v){return fmtK(v);},font:{size:9},color:'#666'},border:{display:false}}}}});
+    var inst=new Chart(canvas,{type:'bar',data:{labels:labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.dataset.label+': \u00a3'+Math.abs(c.raw||0).toLocaleString('en-GB');}}}},scales:{x:{grid:{display:false},ticks:{font:{size:9},color:'#666'}},y:{grid:{color:'#f0f2f5'},ticks:{callback:function(v){return fmtK(v);},font:{size:9},color:'#666'},border:{display:false}}}}});
     smChartInsts.push(inst);
   });
 }
 async function load(){
   try{
-    var res=await fetch('/api/trend').then(function(r){return r.json();});
-    if(!res.success){if(res.error==='session_expired')location.href='/login';return;}
-    allData=res.data;
+    var results=await Promise.all([
+      fetch('/api/trend').then(function(r){return r.json();}),
+      fetch('/api/reforecast?startDate=2026-05-01&endDate=2026-12-31').then(function(r){return r.json();})
+    ]);
+    if(!results[0].success){if(results[0].error==='session_expired')location.href='/login';return;}
+    allActuals=results[0].data;
+    allRf=results[1].success?results[1].data:[];
     var now=new Date();
     document.getElementById('month-to').value=toMS(now);
     document.getElementById('last-loaded').textContent='Updated '+now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
     document.getElementById('loading').style.display='none';
     document.getElementById('content').style.display='block';
     renderCharts();
-  }catch(e){document.getElementById('loading').innerHTML='<span style="color:#dc2626">Failed to load: '+e.message+'</span>';}
+  }catch(e){
+    document.getElementById('loading').innerHTML='<span style="color:#dc2626">Failed to load: '+e.message+'</span>';
+  }
 }
 load();
 </script>
