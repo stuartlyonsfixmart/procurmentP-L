@@ -1,1 +1,444 @@
-SEE_BELOW
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Procurement P&L — Fixmart</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#222;font-size:13px}
+header{background:#1B365D;color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+header h1{font-size:18px;font-weight:700;letter-spacing:0.3px}
+header nav a{color:#aec6e8;text-decoration:none;margin-left:20px;font-size:13px}
+header nav a:hover,header nav a.active{color:#fff}
+.toolbar{padding:12px 24px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.toolbar label{font-size:12px;font-weight:600;color:#555}
+.toolbar select,.toolbar input[type=date]{font-size:12px;padding:5px 8px;border:1px solid #cdd5df;border-radius:4px;background:#fff}
+.btn{padding:6px 14px;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;border:none}
+.btn-primary{background:#1B365D;color:#fff}.btn-primary:hover{background:#244a7a}
+.btn-outline{background:#fff;color:#1B365D;border:1px solid #1B365D}.btn-outline:hover{background:#f0f4f8}
+.status{font-size:11px;color:#888;margin-left:8px}
+.container{padding:20px 24px}
+.table-wrap{overflow-x:auto;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+table{width:100%;border-collapse:collapse;background:#fff;min-width:900px}
+thead tr{background:#1B365D;color:#fff}
+th{padding:9px 10px;font-size:11px;font-weight:600;text-align:right;white-space:nowrap;border-right:1px solid rgba(255,255,255,0.1)}
+th:first-child{text-align:left;min-width:240px}
+th.month-header{text-align:center;border-right:2px solid rgba(255,255,255,0.25)}
+th.sub-header{font-size:10px;font-weight:500;opacity:0.85}
+th.ytd-header{background:#0f2240;border-left:2px solid rgba(255,255,255,0.25)}
+tbody tr{border-bottom:1px solid #eef0f3;transition:background 0.1s}
+tbody tr:hover{background:#f7f9fc}
+td{padding:7px 10px;text-align:right;white-space:nowrap}
+td:first-child{text-align:left;font-size:12px}
+tr.group-header td{background:#e8edf5;font-weight:700;font-size:12px;color:#1B365D;cursor:pointer;user-select:none}
+tr.group-header td:first-child::before{content:'▶ ';font-size:10px;margin-right:4px;transition:transform 0.2s}
+tr.group-header.open td:first-child::before{content:'▼ '}
+tr.line-row td{font-size:11.5px;color:#444;cursor:pointer}
+tr.line-row td:first-child{padding-left:28px;color:#1B365D;text-decoration:underline dotted}
+tr.line-row:hover td{background:#f0f4f8}
+tr.supplier-row td{font-size:11px;color:#555;background:#fafbfc}
+tr.supplier-row td:first-child{padding-left:48px;font-style:italic}
+tr.detail-row td{font-size:10.5px;color:#666;background:#f9fafb}
+tr.detail-row td:first-child{padding-left:64px}
+tr.assumptions-row td{background:#fffbeb;font-size:11px;color:#78350f;font-style:italic;border-top:2px solid #fde68a}
+tr.total-row td{background:#1B365D;color:#fff;font-weight:700;font-size:12px;border-top:2px solid #0f2240}
+tr.subtotal-row td{background:#dce4f0;font-weight:600;font-size:11.5px;color:#1B365D}
+.num{font-variant-numeric:tabular-nums}
+.neg{color:#dc2626}.pos{color:#16a34a}.neu{color:#888}
+.var-neg{color:#dc2626;font-size:10px}.var-pos{color:#16a34a;font-size:10px}
+.month-sep{border-left:2px solid #e2e8f0}
+.ytd-sep{border-left:2px solid #1B365D}
+.loading{text-align:center;padding:60px;color:#888}
+.spinner{display:inline-block;width:24px;height:24px;border:3px solid #e2e8f0;border-top-color:#1B365D;border-radius:50%;animation:spin 0.7s linear infinite;margin-bottom:10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600}
+.badge-rf{background:#dbeafe;color:#1d4ed8}
+.badge-act{background:#dcfce7;color:#15803d}
+.credit-row td{color:#16a34a}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Fixmart — Procurement P&amp;L</h1>
+  <nav>
+    <a href="/" class="active">P&amp;L</a>
+    <a href="/trends">Trends</a>
+    <a href="/logout">Sign out</a>
+  </nav>
+</header>
+
+<div class="toolbar">
+  <label>Period</label>
+  <select id="periodPreset">
+    <option value="custom">Custom range</option>
+    <option value="ytd" selected>YTD 2026</option>
+    <option value="fy25">FY25 (Jan–Dec 2025)</option>
+    <option value="fy26full">FY26 full (Jan–Dec 2026)</option>
+    <option value="last3">Last 3 months</option>
+    <option value="last6">Last 6 months</option>
+  </select>
+  <input type="date" id="startDate" value="2026-01-01">
+  <span>to</span>
+  <input type="date" id="endDate" value="2026-12-31">
+  <button class="btn btn-primary" onclick="loadAll()">Refresh</button>
+  <button class="btn btn-outline" onclick="expandAll()">Expand all</button>
+  <button class="btn btn-outline" onclick="collapseAll()">Collapse all</button>
+  <span class="status" id="statusMsg"></span>
+</div>
+
+<div class="container">
+  <div class="table-wrap">
+    <div id="tableArea" class="loading">
+      <div class="spinner"></div><br>Loading procurement data…
+    </div>
+  </div>
+</div>
+
+<script>
+const RF_START = '2026-05';
+
+const COST_GROUPS = [
+  'Stock Purchases',
+  'Import Costs',
+  'Discounts & Rebates',
+  '3PL & Container Handling',
+  'Procurement People',
+  'Procurement Travel'
+];
+
+const CREDIT_LINES = new Set([
+  'Discounts Taken (5009)',
+  'Supplier Rebate Credits (5008)'
+]);
+
+const ASSUMPTIONS = {
+  '2026-05': 'Headcount: Full team in place. Purchasing assistant replacement assumed from May (£35k). 3PL Unit R storage ceases — saving £2,678/month. Travel: no trip this quarter.',
+  '2026-06': 'Travel: European supplier trip budgeted at £3,250 (Stuttgart/Fiera Milano pattern). 3PL: BRI300 running at £1,377/month. Unit R storage saving continues.',
+  '2026-07': 'Headcount: Rhianna Hulf exits mid-July — partial month cost only. Admin vacancy starts mid-July. SCM vacancy not yet started.',
+  '2026-08': 'Headcount: SCM vacancy (£65k) starts August — step-up in salary cost to ~£21k/month gross. 3PL: NHM300 storage resumes (£2,678/month). 6191 transport elevated at ~£5,871 reflecting container movements.',
+  '2026-09': 'Travel: Istanbul-pattern overseas trip budgeted at £3,250. 3PL: 6191 transport at ~£1,277 — lower movement month. Headcount stable at full team.',
+  '2026-10': 'Stock purchases elevated — seasonal buying cycle. 3PL storage and handling costs zero Oct–Dec pending Unit R project confirmation. 6191 transport at ~£4,653.',
+  '2026-11': 'Employer NIC on bonus accrual starts November (£920/month). 6191 transport at ~£4,720. No travel budgeted this month.',
+  '2026-12': 'Bradley Alexander bonus accrual: £6,667 (Creditor Days + GP% components). Er NIC on bonus: £920. Annual supplier rebate credit expected: £90,000. Year-end supplier trip budgeted at £3,250. Total Dec salary cost ~£27,798 gross incl. bonus.'
+};
+
+let periodDates = [];
+let summaryData = {};
+let linesData   = {};
+let rfData      = {};
+let expandedGroups = new Set();
+let expandedLines  = new Set();
+let expandedSuppliers = new Set();
+
+function fmtMonth(d){ const dt=new Date(d+'T00:00:00Z'); return dt.toLocaleString('en-GB',{month:'short',year:'2-digit',timeZone:'UTC'}); }
+function fmtNum(n){
+  if(n===null||n===undefined) return '';
+  const s=Math.abs(n).toLocaleString('en-GB',{minimumFractionDigits:0,maximumFractionDigits:0});
+  return (n<0?'-':'')+'\u00a3'+s;
+}
+function fmtVar(v){
+  if(v===null||v===undefined) return '';
+  const s=Math.abs(v).toLocaleString('en-GB',{minimumFractionDigits:0,maximumFractionDigits:0});
+  return (v>0?'+':v<0?'-':'')+'\u00a3'+s;
+}
+function periodKey(d){ return d.substring(0,7); }
+function isRfPeriod(d){ return d >= RF_START+'-01'; }
+
+document.getElementById('periodPreset').addEventListener('change', function(){
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth()+1).padStart(2,'0');
+  const today = y+'-'+m+'-01';
+  const map = {
+    ytd:     [y+'-01-01', today],
+    fy25:    ['2025-01-01','2025-12-01'],
+    fy26full:['2026-01-01','2026-12-01'],
+    last3:   [shiftMonth(today,-2), today],
+    last6:   [shiftMonth(today,-5), today]
+  };
+  if(map[this.value]){
+    document.getElementById('startDate').value = map[this.value][0];
+    document.getElementById('endDate').value   = map[this.value][1];
+    loadAll();
+  }
+});
+function shiftMonth(d,n){
+  const dt=new Date(d+'T00:00:00Z');
+  dt.setUTCMonth(dt.getUTCMonth()+n);
+  return dt.toISOString().substring(0,7)+'-01';
+}
+
+async function loadAll(){
+  const startDate = document.getElementById('startDate').value;
+  const endDate   = document.getElementById('endDate').value;
+  document.getElementById('statusMsg').textContent = 'Loading…';
+  document.getElementById('tableArea').innerHTML = '<div class="loading"><div class="spinner"></div><br>Loading procurement data…</div>';
+  try {
+    const [sumRes, linesRes, rfRes] = await Promise.all([
+      fetch('/api/summary?startDate='+startDate+'&endDate='+endDate).then(r=>r.json()),
+      fetch('/api/lines?startDate='+startDate+'&endDate='+endDate).then(r=>r.json()),
+      fetch('/api/reforecast?startDate='+startDate+'&endDate='+endDate).then(r=>r.json())
+    ]);
+    if(!sumRes.success||!linesRes.success||!rfRes.success){
+      if([sumRes,linesRes,rfRes].some(r=>r.error==='session_expired')){ location.href='/login.html'; return; }
+      throw new Error('API error');
+    }
+    const periodSet = new Set();
+    sumRes.data.forEach(r => periodSet.add(r.period_date.substring(0,7)));
+    rfRes.data.forEach(r => periodSet.add(r.period_date.substring(0,7)));
+    periodDates = Array.from(periodSet).sort();
+    summaryData = {};
+    sumRes.data.forEach(r => { summaryData[periodKey(r.period_date)] = r.total_cost; });
+    linesData = {};
+    linesRes.data.forEach(r => {
+      const k = r.section+'|'+r.line_label;
+      if(!linesData[k]) linesData[k]={};
+      linesData[k][periodKey(r.period_date)] = r.total;
+    });
+    rfData = {};
+    rfRes.data.forEach(r => {
+      const k = r.cost_group+'|'+r.line_label;
+      if(!rfData[k]) rfData[k]={};
+      rfData[k][periodKey(r.period_date)] = { actual:r.actual, reforecast:r.reforecast, variance:r.variance, variance_pct:r.variance_pct };
+    });
+    document.getElementById('statusMsg').textContent = 'Updated '+new Date().toLocaleTimeString('en-GB');
+    renderTable();
+  } catch(e){
+    document.getElementById('tableArea').innerHTML = '<div class="loading" style="color:#dc2626">Failed to load data: '+e.message+'</div>';
+    document.getElementById('statusMsg').textContent = 'Error';
+  }
+}
+
+function renderTable(){
+  const periods = periodDates;
+  if(!periods.length){ document.getElementById('tableArea').innerHTML='<div class="loading">No data for selected period</div>'; return; }
+  let html = '<table><thead>';
+  html += '<tr><th rowspan="2" style="text-align:left">Nominal</th>';
+  periods.forEach(p => {
+    if(isRfPeriod(p+'-01')){
+      html += '<th colspan="3" class="month-header">'+fmtMonth(p+'-01')+'</th>';
+    } else {
+      html += '<th rowspan="2" class="month-header">'+fmtMonth(p+'-01')+'</th>';
+    }
+  });
+  html += '<th colspan="2" class="ytd-header month-header">YTD</th></tr>';
+  html += '<tr>';
+  periods.forEach(p => {
+    if(isRfPeriod(p+'-01')){
+      html += '<th class="sub-header">Actual</th><th class="sub-header">RF</th><th class="sub-header">Var</th>';
+    }
+  });
+  html += '<th class="sub-header ytd-sep">Actual</th><th class="sub-header">RF</th></tr>';
+  html += '</thead><tbody>';
+
+  COST_GROUPS.forEach(group => {
+    const isOpen = expandedGroups.has(group);
+    let groupActYtd=0, groupRfYtd=0;
+    const groupPeriodAct={}, groupPeriodRf={};
+    periods.forEach(p=>{
+      let gAct=0, gRf=0;
+      Object.keys(linesData).filter(k=>k.startsWith(group+'|')).forEach(k=>{
+        const v = linesData[k][p]||0;
+        gAct += (CREDIT_LINES.has(k.split('|')[1]) ? -v : v);
+      });
+      Object.keys(rfData).filter(k=>k.startsWith(group+'|')).forEach(k=>{
+        const rf = rfData[k][p];
+        if(rf) gRf += rf.reforecast||0;
+      });
+      groupPeriodAct[p]=gAct;
+      groupPeriodRf[p]=gRf;
+      groupActYtd+=gAct;
+      groupRfYtd+=gRf;
+    });
+    html += '<tr class="group-header '+(isOpen?'open':'')+'" onclick="toggleGroup(\''+group.replace(/'/g,"\\'")+'\')">';
+    html += '<td>'+group+'</td>';
+    periods.forEach(p=>{
+      const act=groupPeriodAct[p]||0;
+      const rf=groupPeriodRf[p]||0;
+      const v=act-rf;
+      if(isRfPeriod(p+'-01')){
+        html += '<td class="num">'+fmtNum(act)+'</td><td class="num" style="opacity:0.7">'+fmtNum(rf)+'</td><td class="num '+(v>0?'neg':v<0?'pos':'')+'">'+fmtVar(v)+'</td>';
+      } else {
+        html += '<td class="num">'+fmtNum(act)+'</td>';
+      }
+    });
+    html += '<td class="num ytd-sep">'+fmtNum(groupActYtd)+'</td><td class="num">'+fmtNum(groupRfYtd)+'</td>';
+    html += '</tr>';
+
+    if(isOpen){
+      const groupLines = new Set();
+      [...Object.keys(linesData), ...Object.keys(rfData)]
+        .filter(k=>k.startsWith(group+'|'))
+        .forEach(k=>groupLines.add(k.split('|')[1]));
+      groupLines.forEach(lineLabel=>{
+        const lineKey = group+'|'+lineLabel;
+        const isCredit = CREDIT_LINES.has(lineLabel);
+        let lineActYtd=0, lineRfYtd=0;
+        html += '<tr class="line-row '+(isCredit?'credit-row':'')+'" onclick="toggleLine(\''+lineKey.replace(/'/g,"\\'")+'\')">';
+        html += '<td>'+lineLabel+'</td>';
+        periods.forEach(p=>{
+          const rawAct = (linesData[lineKey]&&linesData[lineKey][p])||0;
+          const act = isCredit ? -rawAct : rawAct;
+          const rf = (rfData[lineKey]&&rfData[lineKey][p]&&rfData[lineKey][p].reforecast)||0;
+          const v = act-rf;
+          lineActYtd+=act; lineRfYtd+=rf;
+          if(isRfPeriod(p+'-01')){
+            html += '<td class="num">'+fmtNum(act)+'</td><td class="num" style="opacity:0.7">'+fmtNum(rf)+'</td><td class="num '+(v>0?'neg':v<0?'pos':'')+'">'+fmtVar(v)+'</td>';
+          } else {
+            html += '<td class="num">'+fmtNum(act)+'</td>';
+          }
+        });
+        html += '<td class="num ytd-sep">'+fmtNum(lineActYtd)+'</td><td class="num">'+fmtNum(lineRfYtd)+'</td>';
+        html += '</tr>';
+      });
+    }
+  });
+
+  let totalActYtd=0, totalRfYtd=0;
+  html += '<tr class="total-row"><td>Total Procurement Cost</td>';
+  periods.forEach(p=>{
+    let tAct=0, tRf=0;
+    COST_GROUPS.forEach(group=>{
+      Object.keys(linesData).filter(k=>k.startsWith(group+'|')).forEach(k=>{
+        const v=linesData[k][p]||0;
+        tAct+=(CREDIT_LINES.has(k.split('|')[1])?-v:v);
+      });
+      Object.keys(rfData).filter(k=>k.startsWith(group+'|')).forEach(k=>{
+        const rf=rfData[k][p];
+        if(rf) tRf+=rf.reforecast||0;
+      });
+    });
+    totalActYtd+=tAct; totalRfYtd+=tRf;
+    const v=tAct-tRf;
+    if(isRfPeriod(p+'-01')){
+      html+='<td class="num">'+fmtNum(tAct)+'</td><td class="num" style="opacity:0.7">'+fmtNum(tRf)+'</td><td class="num '+(v>0?'neg':v<0?'pos':'')+'">'+fmtVar(v)+'</td>';
+    } else {
+      html+='<td class="num">'+fmtNum(tAct)+'</td>';
+    }
+  });
+  html+='<td class="num ytd-sep">'+fmtNum(totalActYtd)+'</td><td class="num">'+fmtNum(totalRfYtd)+'</td></tr>';
+
+  html += '<tr class="assumptions-row"><td>\ud83d\udccb Assumptions</td>';
+  periods.forEach(p=>{
+    const txt = ASSUMPTIONS[p] || '';
+    if(isRfPeriod(p+'-01')){
+      html+='<td colspan="3" style="text-align:left;max-width:200px;white-space:normal;line-height:1.4">'+txt+'</td>';
+    } else {
+      html+='<td></td>';
+    }
+  });
+  html+='<td></td><td></td></tr>';
+  html += '</tbody></table>';
+  document.getElementById('tableArea').innerHTML = html;
+
+  expandedLines.forEach(lineKey=>{
+    const cache = (window._supplierCache||{})[lineKey];
+    if(cache) injectSupplierRows(lineKey, cache);
+  });
+}
+
+function toggleGroup(group){
+  if(expandedGroups.has(group)) expandedGroups.delete(group);
+  else expandedGroups.add(group);
+  renderTable();
+}
+
+async function toggleLine(lineKey){
+  if(expandedLines.has(lineKey)){
+    expandedLines.delete(lineKey);
+    renderTable();
+    return;
+  }
+  expandedLines.add(lineKey);
+  renderTable();
+  const startDate = document.getElementById('startDate').value;
+  const endDate   = document.getElementById('endDate').value;
+  const lineLabel = lineKey.split('|')[1];
+  try {
+    const res = await fetch('/api/suppliers?startDate='+startDate+'&endDate='+endDate+'&lineLabel='+encodeURIComponent(lineLabel)).then(r=>r.json());
+    if(!res.success) return;
+    window._supplierCache = window._supplierCache||{};
+    window._supplierCache[lineKey] = res.data;
+    renderTable();
+  } catch(e){ console.error(e); }
+}
+
+function injectSupplierRows(lineKey, supplierData){
+  const rows = document.querySelectorAll('tr.line-row');
+  let targetRow = null;
+  rows.forEach(r=>{
+    if(r.getAttribute('onclick') && r.getAttribute('onclick').includes(lineKey.replace(/'/g,"\\'").replace(/&/g,'&amp;'))) targetRow=r;
+    if(!targetRow && r.getAttribute('onclick') && r.getAttribute('onclick').includes(lineKey.split('|')[1].replace(/'/g,"\\'"))) targetRow=r;
+  });
+  if(!targetRow) return;
+  const lineLabel = lineKey.split('|')[1];
+  const isCredit = CREDIT_LINES.has(lineLabel);
+  const periods = periodDates;
+  const suppliers = [...new Set(supplierData.map(r=>r.supplier))];
+  let insertAfter = targetRow;
+  suppliers.forEach(sup=>{
+    const supKey = lineKey+'|'+sup;
+    const tr = document.createElement('tr');
+    tr.className = 'supplier-row';
+    tr.setAttribute('onclick','toggleSupplier(\''+(supKey.replace(/'/g,"\\'"))+'\',\''+(lineLabel.replace(/'/g,"\\'"))+'\',\''+(sup.replace(/'/g,"\\'"))+'\')' );
+    let supYtdAct=0;
+    let tdHtml = '<td>'+sup+'</td>';
+    periods.forEach(p=>{
+      const match = supplierData.find(r=>r.period_date.substring(0,7)===p && r.supplier===sup);
+      const rawAct = match?match.actual:0;
+      const act = isCredit ? -rawAct : rawAct;
+      const rf = match?match.reforecast||0:0;
+      const v = act-rf;
+      supYtdAct+=act;
+      if(isRfPeriod(p+'-01')){
+        tdHtml+='<td class="num">'+fmtNum(act)+'</td><td class="num" style="opacity:0.6">'+fmtNum(rf)+'</td><td class="num '+(v>0?'neg':v<0?'pos':'')+'">'+fmtVar(v)+'</td>';
+      } else {
+        tdHtml+='<td class="num">'+fmtNum(act)+'</td>';
+      }
+    });
+    tdHtml+='<td class="num ytd-sep">'+fmtNum(supYtdAct)+'</td><td></td>';
+    tr.innerHTML = tdHtml;
+    insertAfter.insertAdjacentElement('afterend', tr);
+    insertAfter = tr;
+  });
+}
+
+function toggleSupplier(supKey, lineLabel, supplier){
+  if(expandedSuppliers.has(supKey)) expandedSuppliers.delete(supKey);
+  else expandedSuppliers.add(supKey);
+  loadDetail(supKey, lineLabel, supplier);
+}
+
+async function loadDetail(supKey, lineLabel, supplier){
+  const startDate = document.getElementById('startDate').value;
+  const endDate   = document.getElementById('endDate').value;
+  try {
+    const res = await fetch('/api/detail?startDate='+startDate+'&endDate='+endDate+'&lineLabel='+encodeURIComponent(lineLabel)+'&supplier='+encodeURIComponent(supplier)).then(r=>r.json());
+    if(!res.success) return;
+    const rows = document.querySelectorAll('tr.supplier-row');
+    let targetRow = null;
+    rows.forEach(r=>{ if(r.getAttribute('onclick') && r.getAttribute('onclick').includes(supplier.replace(/'/g,"\\'").substring(0,15))) targetRow=r; });
+    if(!targetRow) return;
+    let next = targetRow.nextElementSibling;
+    while(next && next.classList.contains('detail-row')){ const tmp=next.nextElementSibling; next.remove(); next=tmp; }
+    if(!expandedSuppliers.has(supKey)) return;
+    const colCount = document.querySelector('thead tr:first-child').querySelectorAll('th').length;
+    res.data.forEach(d=>{
+      const tr = document.createElement('tr');
+      tr.className='detail-row';
+      const amt = CREDIT_LINES.has(lineLabel) ? -d.net_amount : d.net_amount;
+      tr.innerHTML='<td>'+d.transaction_date+' \u2014 '+d.reference+' \u2014 '+(d.description||'')+'</td><td class="num '+(amt<0?'neg':'')+'" colspan="'+(colCount-1)+'">'+fmtNum(amt)+'</td>';
+      targetRow.insertAdjacentElement('afterend', tr);
+    });
+  } catch(e){ console.error(e); }
+}
+
+function expandAll(){ COST_GROUPS.forEach(g=>expandedGroups.add(g)); renderTable(); }
+function collapseAll(){ expandedGroups.clear(); expandedLines.clear(); expandedSuppliers.clear(); renderTable(); }
+
+document.getElementById('periodPreset').dispatchEvent(new Event('change'));
+</script>
+</body>
+</html>
