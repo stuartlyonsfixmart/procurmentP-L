@@ -1,0 +1,19 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'europe-west2-docker.pkg.dev/project-aa7ee149-5e29-4eb4-8bc/cloud-run-source-deploy/procurementpnl', '.']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'europe-west2-docker.pkg.dev/project-aa7ee149-5e29-4eb4-8bc/cloud-run-source-deploy/procurementpnl']
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'procurementpnl'
+      - '--image=europe-west2-docker.pkg.dev/project-aa7ee149-5e29-4eb4-8bc/cloud-run-source-deploy/procurementpnl'
+      - '--region=europe-west2'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--min-instances=1'
+      - '--memory=512Mi'
+images:
+  - 'europe-west2-docker.pkg.dev/project-aa7ee149-5e29-4eb4-8bc/cloud-run-source-deploy/procurementpnl'
