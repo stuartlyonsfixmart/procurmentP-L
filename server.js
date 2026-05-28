@@ -57,7 +57,7 @@ app.get('/api/summary', requireAuth, async (req, res) => {
   if (cached) return res.json({ success: true, data: cached, fromCache: true });
   try {
     const [rows] = await bq.query({
-      query: `SELECT period_date, ROUND(SUM(net_amount),2) AS total_cost FROM ${DS} WHERE period_date BETWEEN @startDate AND @endDate GROUP BY 1 ORDER BY 1`,
+      query: `SELECT period_date, ROUND(SUM(net_amount),2) AS total_cost FROM ${DS} WHERE period_date BETWEEN @startDate AND @endDate AND section IN ('Discounts & Rebates','3PL & Container Handling','Procurement People','Procurement Travel') GROUP BY 1 ORDER BY 1`,
       params: { startDate, endDate }, location: 'europe-west2'
     });
     const data = rows.map(r => ({ period_date: r.period_date ? r.period_date.value || String(r.period_date) : '', total_cost: r.total_cost }));
@@ -74,7 +74,7 @@ app.get('/api/lines', requireAuth, async (req, res) => {
   if (cached) return res.json({ success: true, data: cached, fromCache: true });
   try {
     const [rows] = await bq.query({
-      query: `SELECT period_date, section, line_label, ROUND(SUM(net_amount),2) AS total FROM ${DS} WHERE period_date BETWEEN @startDate AND @endDate GROUP BY 1,2,3 ORDER BY 1,2,3`,
+      query: `SELECT period_date, section, line_label, ROUND(SUM(net_amount),2) AS total FROM ${DS} WHERE period_date BETWEEN @startDate AND @endDate AND section IN ('Discounts & Rebates','3PL & Container Handling','Procurement People','Procurement Travel') GROUP BY 1,2,3 ORDER BY 1,2,3`,
       params: { startDate, endDate }, location: 'europe-west2'
     });
     const data = rows.map(r => ({ period_date: r.period_date ? r.period_date.value || String(r.period_date) : '', section: r.section, line_label: r.line_label, total: r.total }));
@@ -91,7 +91,7 @@ app.get('/api/reforecast', requireAuth, async (req, res) => {
   if (cached) return res.json({ success: true, data: cached, fromCache: true });
   try {
     const [rows] = await bq.query({
-      query: `SELECT period_date, cost_group, line_label, ROUND(actual_amount,2) AS actual, ROUND(reforecast_amount,2) AS reforecast, ROUND(variance_amount,2) AS variance, variance_pct FROM ${RDS} WHERE period_date BETWEEN @startDate AND @endDate AND supplier IS NULL ORDER BY period_date, cost_group, line_label`,
+      query: `SELECT period_date, cost_group, line_label, ROUND(actual_amount,2) AS actual, ROUND(reforecast_amount,2) AS reforecast, ROUND(variance_amount,2) AS variance, variance_pct FROM ${RDS} WHERE period_date BETWEEN @startDate AND @endDate AND supplier IS NULL AND cost_group IN ('Discounts & Rebates','3PL & Container Handling','Procurement People','Procurement Travel') ORDER BY period_date, cost_group, line_label`,
       params: { startDate, endDate }, location: 'europe-west2'
     });
     const data = rows.map(r => ({
@@ -171,7 +171,7 @@ app.get('/api/trend', requireAuth, async (req, res) => {
   if (cached) return res.json({ success: true, data: cached, fromCache: true });
   try {
     const [rows] = await bq.query({
-      query: `SELECT period_date, section, ROUND(SUM(net_amount), 2) AS total FROM ${DS} WHERE period_date >= '2025-01-01' GROUP BY 1, 2 ORDER BY 1, 2`,
+      query: `SELECT period_date, section, ROUND(SUM(net_amount), 2) AS total FROM ${DS} WHERE period_date >= '2025-01-01' AND section IN ('Discounts & Rebates','3PL & Container Handling','Procurement People','Procurement Travel') GROUP BY 1, 2 ORDER BY 1, 2`,
       location: 'europe-west2'
     });
     const data = rows.map(r => ({
