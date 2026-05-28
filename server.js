@@ -12,7 +12,7 @@ const bq = new BigQuery({ projectId: PROJECT_ID });
 const cache = new NodeCache({ stdTTL: 600 });
 
 const PORT = process.env.PORT || 8080;
-const USERS = { stuart: 'fixmart', carl: 'fixmart', bradley: 'fixmart', fixmart: 'fixmart' };
+const USERS = { brad: 'brand', fixmart: 'fixmart' };
 
 app.set('trust proxy', 1);
 app.use(express.json());
@@ -112,7 +112,7 @@ app.get('/api/suppliers', requireAuth, async (req, res) => {
   if (cached) return res.json({ success: true, data: cached, fromCache: true });
   try {
     const [actRows] = await bq.query({
-      query: `SELECT period_date, source AS supplier, ROUND(SUM(net_amount),2) AS actual FROM ${DS} WHERE period_date BETWEEN @startDate AND @endDate AND line_label=@lineLabel GROUP BY 1,2 ORDER BY 1, ABS(SUM(net_amount)) DESC`,
+      query: `SELECT period_date, source AS supplier, ROUND(SUM(net_amount),2) AS actual FROM ${DS} WHERE period_date BETWEEN @startDate AND @endDate AND line_label=@lineLabel GROUP BY 1,2 ORDER BY 1, SUM(net_amount)`,
       params: { startDate, endDate, lineLabel }, location: 'europe-west2'
     });
     const [rfRows] = await bq.query({
@@ -131,7 +131,6 @@ app.get('/api/suppliers', requireAuth, async (req, res) => {
     });
     rfRows.forEach(r => {
       const pd = r.period_date ? r.period_date.value || String(r.period_date) : '';
-      const key = pd + '|' + r.supplier;
       const hasActual = data.some(d => d.period_date === pd && d.supplier === r.supplier);
       if (!hasActual && r.reforecast !== 0) {
         data.push({ period_date: pd, supplier: r.supplier, actual: 0, reforecast: r.reforecast, variance: r.variance });
@@ -171,7 +170,7 @@ app.get('/api/trend', requireAuth, async (req, res) => {
   if (cached) return res.json({ success: true, data: cached, fromCache: true });
   try {
     const [rows] = await bq.query({
-      query: `SELECT period_date, section, ROUND(SUM(net_amount),2) AS total FROM ${DS} WHERE period_date >= '2025-01-01' GROUP BY 1,2 ORDER BY 1,2`,
+      query: `SELECT period_date, section, ROUND(SUM(net_amount), 2) AS total FROM ${DS} WHERE period_date >= '2025-01-01' GROUP BY 1, 2 ORDER BY 1, 2`,
       location: 'europe-west2'
     });
     const data = rows.map(r => ({
