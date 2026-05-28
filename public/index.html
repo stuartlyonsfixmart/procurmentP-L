@@ -100,7 +100,7 @@ var GROUPS=[
   {id:'people',label:'Procurement People',lines:['Procurement Salaries (7030)','Procurement Employer NIC (7031)','Procurement Employer Pension (7032)'],credit:false},
   {id:'travel',label:'Procurement Travel',lines:['Procurement Travel Costs (7037)'],credit:false}
 ];
-var CREDIT_LINES=new Set(['Discounts Taken (5009)','Supplier Rebate Credits (5008)']);
+var CREDIT_SECTIONS=new Set(['Discounts & Rebates']);
 var NAVY='#1B365D';
 var GREY='#94a3b8';
 var allData=[];
@@ -139,14 +139,12 @@ function getFilteredPeriods(){
   return all;
 }
  
-function adjAmt(lbl,v){return CREDIT_LINES.has(lbl)?-v:v;}
+function adjAmt(section,v){return CREDIT_SECTIONS.has(section)?-v:v;}
  
 function groupTotal(group,period){
   var t=0;
-  group.lines.forEach(function(lbl){
-    allData.filter(function(r){return r.period_date.slice(0,7)===period&&r.section===lbl;})
-      .forEach(function(r){t+=adjAmt(lbl,r.total);});
-  });
+  allData.filter(function(r){return r.period_date.slice(0,7)===period&&r.section===group.label;})
+    .forEach(function(r){t+=adjAmt(r.section,r.total);});
   return Math.round(t);
 }
  
@@ -156,7 +154,6 @@ function renderCharts(){
   var labels=periods.map(function(p){return fmtM(p);});
   var recentIdx=periods.length-8;
  
-  // Total across all controllable groups
   var totals=periods.map(function(p){
     var t=0;
     GROUPS.forEach(function(g){t+=groupTotal(g,p);});
@@ -236,4 +233,3 @@ load();
 </script>
 </body>
 </html>
- 
