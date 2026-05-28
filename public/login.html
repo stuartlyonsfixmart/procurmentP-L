@@ -3,35 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Procurement P&L — Login</title>
+<title>Fixmart &mdash; Procurement P&amp;L</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;display:flex;align-items:center;justify-content:center;min-height:100vh}
-.card{background:#fff;border-radius:8px;box-shadow:0 2px 16px rgba(0,0,0,0.12);padding:40px 36px;width:340px}
-.logo{text-align:center;margin-bottom:28px}
-.logo-text{font-size:22px;font-weight:700;color:#1B365D}
-.logo-sub{font-size:13px;color:#666;margin-top:4px}
-label{display:block;font-size:13px;font-weight:600;color:#444;margin-bottom:6px}
-input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:5px;font-size:14px;margin-bottom:18px;outline:none;transition:border 0.2s}
-input:focus{border-color:#1B365D}
-button{width:100%;padding:11px;background:#1B365D;color:#fff;border:none;border-radius:5px;font-size:15px;font-weight:600;cursor:pointer;transition:background 0.2s}
-button:hover{background:#244a7a}
-.error{background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;padding:10px 12px;border-radius:5px;font-size:13px;margin-bottom:16px}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Barlow',sans-serif;background:#1a1a1a;display:flex;align-items:center;justify-content:center;min-height:100vh;}
+  .card{background:#242424;border:1px solid #333;border-top:3px solid #9ACD00;border-radius:6px;padding:40px 36px;width:360px;}
+  .logo{text-align:center;margin-bottom:8px;}
+  .logo-mark{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:800;color:#fff;}
+  .logo-mark span{color:#9ACD00;}
+  .logo-sub{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.12em;text-align:center;margin-bottom:32px;}
+  label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;}
+  input{width:100%;padding:10px 12px;background:#1a1a1a;border:1px solid #444;border-radius:4px;font-size:14px;font-family:'Barlow',sans-serif;color:#fff;margin-bottom:18px;outline:none;transition:border 0.2s;}
+  input:focus{border-color:#9ACD00;}
+  button{width:100%;padding:11px;background:#9ACD00;color:#1a1a1a;border:none;border-radius:4px;font-size:14px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:background 0.2s;}
+  button:hover{background:#8ab800;}
+  .error{background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);color:#f87171;padding:10px 12px;border-radius:4px;font-size:13px;margin-bottom:16px;font-family:'Barlow',sans-serif;}
 </style>
 </head>
 <body>
 <div class="card">
-  <div class="logo">
-    <div class="logo-text">Fixmart</div>
-    <div class="logo-sub">Procurement P&amp;L</div>
-  </div>
+  <div class="logo"><div class="logo-mark">fix<span>mart</span></div></div>
+  <div class="logo-sub">Procurement P&amp;L</div>
   <form method="POST" action="/login">
     <div id="err" class="error" style="display:none">Incorrect username or password</div>
     <label>Username</label>
     <input type="text" name="username" autocomplete="username" required>
     <label>Password</label>
     <input type="password" name="password" autocomplete="current-password" required>
-    <button type="submit">Sign in</button>
+    <button type="submit">Sign In</button>
   </form>
 </div>
 <script>if(location.search.includes('error=1')) document.getElementById('err').style.display='block';</script>

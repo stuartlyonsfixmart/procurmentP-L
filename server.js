@@ -24,26 +24,27 @@ app.use(session({
   cookie: { maxAge: 8 * 60 * 60 * 1000, secure: false, sameSite: 'lax' }
 }));
 
-app.get('/login.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
-
 function requireAuth(req, res, next) {
   if (req.session && req.session.user) return next();
   if (req.path.startsWith('/api/')) return res.status(401).json({ success: false, error: 'session_expired' });
-  res.redirect('/login.html');
+  res.redirect('/login');
 }
+
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.get('/login.html', (req, res) => res.redirect('/login'));
 
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
   if (USERS[username] && USERS[username] === password) {
     req.session.regenerate(err => {
-      if (err) return res.redirect('/login.html?error=1');
+      if (err) return res.redirect('/login?error=1');
       req.session.user = username;
-      req.session.save(err2 => { if (err2) return res.redirect('/login.html?error=1'); res.redirect('/'); });
+      req.session.save(err2 => { if (err2) return res.redirect('/login?error=1'); res.redirect('/'); });
     });
-  } else { res.redirect('/login.html?error=1'); }
+  } else { res.redirect('/login?error=1'); }
 });
 
-app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login.html'); });
+app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login'); });
 
 const DS  = `\`${PROJECT_ID}.fixmart_bi.vw_procurement_pl\``;
 const RDS = `\`${PROJECT_ID}.fixmart_bi.vw_procurement_reforecast_actual\``;
@@ -182,12 +183,8 @@ app.get('/api/trend', requireAuth, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ success: false, error: err.message }); }
 });
 
-app.use((req, res, next) => {
-  if (req.path === '/login.html' || req.path === '/login') return next();
-  requireAuth(req, res, next);
-});
-
-app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/trends', requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'public', 'trends.html')));
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.listen(PORT, () => console.log(`Procurement P&L running on port ${PORT}`));

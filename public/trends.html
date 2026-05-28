@@ -3,91 +3,148 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Procurement Trends — Fixmart</title>
+<title>Fixmart &mdash; Procurement Trends</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#222;font-size:13px}
-header{background:#1B365D;color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
-header h1{font-size:18px;font-weight:700}
-header nav a{color:#aec6e8;text-decoration:none;margin-left:20px;font-size:13px}
-header nav a:hover,header nav a.active{color:#fff}
-.container{padding:24px}
-.chart-card{background:#fff;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.08);padding:20px;margin-bottom:20px}
-.chart-title{font-size:13px;font-weight:700;color:#1B365D;margin-bottom:16px}
-.chart-wrap{position:relative;height:280px}
-.small-multiples{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
-.sm-card{background:#fff;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.08);padding:16px}
-.sm-title{font-size:12px;font-weight:600;color:#1B365D;margin-bottom:10px}
-.sm-wrap{position:relative;height:140px}
-.loading{text-align:center;padding:40px;color:#888}
+  :root{--lime:#9ACD00;--black:#1a1a1a;--offwhite:#f5f5f3;--border:#e0e0e0;--muted:#666;--surface:#fff;--red:#dc2626;--green:#16a34a;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Barlow',sans-serif;background:var(--offwhite);color:var(--black);}
+  .header{background:var(--black);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;border-bottom:3px solid var(--lime);}
+  .header-left{display:flex;align-items:center;gap:16px;}
+  .hdiv{width:1px;height:26px;background:rgba(255,255,255,0.15);}
+  .htitle{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:600;color:rgba(255,255,255,0.45);letter-spacing:0.1em;text-transform:uppercase;}
+  .header-right{display:flex;align-items:center;gap:12px;}
+  .nav-tabs{display:flex;gap:4px;}
+  .nav-tab{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:rgba(255,255,255,0.45);text-decoration:none;padding:6px 16px;border-radius:4px;border:1px solid rgba(255,255,255,0.1);}
+  .nav-tab:hover{color:#fff;background:rgba(255,255,255,0.08);}
+  .nav-tab.active{background:var(--lime);color:var(--black);border-color:var(--lime);}
+  .lupd{color:rgba(255,255,255,0.3);font-size:11px;font-family:'DM Mono',monospace;}
+  .logout-btn{color:rgba(255,255,255,0.35);text-decoration:none;font-size:12px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.06em;text-transform:uppercase;}
+  .logout-btn:hover{color:rgba(255,255,255,0.7);}
+  .main{padding:16px 24px;}
+  .filters-bar{background:var(--black);border-radius:6px;padding:10px 16px;display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap;}
+  .fl{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.1em;white-space:nowrap;}
+  .fg{display:flex;align-items:center;gap:7px;}
+  .fdiv{width:1px;height:20px;background:rgba(255,255,255,0.1);}
+  .toggle{display:flex;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;overflow:hidden;}
+  .tbtn{padding:4px 14px;font-size:13px;font-weight:700;font-family:'Barlow Condensed',sans-serif;cursor:pointer;color:rgba(255,255,255,0.45);background:transparent;border:none;}
+  .tbtn.active{background:var(--lime);color:var(--black);}
+  .fsel{font-family:'Barlow',sans-serif;font-size:13px;color:#fff;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;padding:4px 9px;cursor:pointer;outline:none;color-scheme:dark;}
+  .abtn{padding:5px 16px;font-size:13px;font-weight:700;font-family:'Barlow Condensed',sans-serif;cursor:pointer;background:var(--lime);color:var(--black);border:none;border-radius:4px;}
+  .section-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--black);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:12px;}
+  .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:20px;margin-bottom:16px;}
+  .chart-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--black);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px;}
+  .chart-wrap{position:relative;height:260px;}
+  .small-multiples{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;}
+  .sm-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px;}
+  .sm-title{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;color:var(--black);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;}
+  .sm-wrap{position:relative;height:150px;}
+  .loading-full{display:flex;align-items:center;justify-content:center;height:200px;font-size:14px;color:var(--muted);gap:10px;}
+  .spin{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--lime);border-radius:50%;animation:spin 0.8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
-<header>
-  <h1>Fixmart — Procurement Trends</h1>
-  <nav>
-    <a href="/">P&amp;L</a>
-    <a href="/trends" class="active">Trends</a>
-    <a href="/logout">Sign out</a>
-  </nav>
-</header>
-<div class="container">
-  <div id="loading" class="loading">Loading trend data…</div>
+<div class="header">
+  <div class="header-left">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#fff">fix<span style="color:#9ACD00">mart</span></div>
+    <div class="hdiv"></div>
+    <div class="htitle">Procurement Trends</div>
+  </div>
+  <div class="header-right">
+    <div class="nav-tabs">
+      <a href="/" class="nav-tab">P&amp;L</a>
+      <a href="/trends" class="nav-tab active">Trends</a>
+    </div>
+    <div class="hdiv"></div>
+    <span class="lupd" id="last-loaded"></span>
+    <a href="/logout" class="logout-btn">Sign Out</a>
+  </div>
+</div>
+<div class="main">
+  <div class="filters-bar">
+    <div class="fg">
+      <span class="fl">Period</span>
+      <div class="toggle">
+        <button class="tbtn active" id="btn-all" onclick="setAll()">All</button>
+        <button class="tbtn" id="btn-12m" onclick="setMonths(12)">12m</button>
+        <button class="tbtn" id="btn-6m" onclick="setMonths(6)">6m</button>
+        <button class="tbtn" id="btn-3m" onclick="setMonths(3)">3m</button>
+      </div>
+    </div>
+    <div class="fdiv"></div>
+    <div class="fg"><span class="fl">From</span><input type="month" class="fsel" id="month-from" value="2025-01"></div>
+    <div class="fg"><span class="fl">To</span><input type="month" class="fsel" id="month-to"></div>
+    <button class="abtn" onclick="applyRange()">Apply</button>
+  </div>
+  <div id="loading" class="loading-full"><div class="spin"></div>&nbsp;Loading trend data…</div>
   <div id="content" style="display:none">
     <div class="chart-card">
-      <div class="chart-title">Total Procurement Cost by Month (Jan 2025 onwards)</div>
+      <div class="chart-title">Total Controllable Procurement Cost</div>
       <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
     </div>
-    <div class="chart-title" style="margin-bottom:12px;font-size:13px;font-weight:700;color:#1B365D">Cost by Group</div>
+    <div class="section-title" style="margin-bottom:12px">Cost by Group</div>
     <div class="small-multiples" id="smallMultiples"></div>
   </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
-const GROUPS = ['Stock Purchases','Import Costs','Discounts & Rebates','3PL & Container Handling','Procurement People','Procurement Travel'];
-const CREDIT_GROUPS = new Set(['Discounts & Rebates']);
-const NAVY = '#1B365D';
-const GREY = '#94a3b8';
-function fmtMonth(d){ const dt=new Date(d+'T00:00:00Z'); return dt.toLocaleString('en-GB',{month:'short',year:'2-digit',timeZone:'UTC'}); }
-function fmtK(n){ return n>=1000?'\u00a3'+(n/1000).toFixed(0)+'k':'\u00a3'+n.toFixed(0); }
+var GROUPS=[
+  {id:'discounts',label:'Discounts & Rebates'},
+  {id:'tpl',label:'3PL & Container Handling'},
+  {id:'people',label:'Procurement People'},
+  {id:'travel',label:'Procurement Travel'}
+];
+var CREDIT_SECTIONS=new Set(['Discounts & Rebates']);
+var NAVY='#1B365D';
+var GREY='#94a3b8';
+var allData=[];
+var mainChartInst=null;
+var smChartInsts=[];
+function toMS(d){return d.toISOString().slice(0,7);}
+function fmtM(ym){var p=ym.slice(0,7).split('-');var ms=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return ms[parseInt(p[1],10)-1]+' '+p[0].slice(2);}
+function fmtK(n){var a=Math.abs(n);return a>=1000?'\u00a3'+(a/1000).toFixed(0)+'k':'\u00a3'+a.toFixed(0);}
+function setAll(){document.getElementById('month-from').value='2025-01';document.getElementById('month-to').value=toMS(new Date());setAP('all');renderCharts();}
+function setMonths(n){var to=new Date(),from=new Date();from.setMonth(from.getMonth()-n+1);from.setDate(1);document.getElementById('month-from').value=toMS(from);document.getElementById('month-to').value=toMS(to);setAP(n+'m');renderCharts();}
+function applyRange(){setAP(null);renderCharts();}
+function setAP(id){document.querySelectorAll('.tbtn').forEach(function(b){b.classList.remove('active');});if(id){var el=document.getElementById('btn-'+id);if(el)el.classList.add('active');}}
+function getFilteredPeriods(){var fm=document.getElementById('month-from').value,tm=document.getElementById('month-to').value;if(!fm||!tm)return null;return [...new Set(allData.map(function(r){return r.period_date.slice(0,7);}))].sort().filter(function(p){return p>=fm&&p<=tm;});}
+function adjAmt(section,v){return CREDIT_SECTIONS.has(section)?-v:v;}
+function groupTotal(group,period){var t=0;allData.filter(function(r){return r.period_date.slice(0,7)===period&&r.section===group.label;}).forEach(function(r){t+=adjAmt(r.section,r.total);});return Math.round(t);}
+function renderCharts(){
+  var periods=getFilteredPeriods();
+  if(!periods||!periods.length)return;
+  var labels=periods.map(function(p){return fmtM(p);});
+  var recentIdx=periods.length-8;
+  var totals=periods.map(function(p){var t=0;GROUPS.forEach(function(g){t+=groupTotal(g,p);});return t;});
+  if(mainChartInst){mainChartInst.destroy();mainChartInst=null;}
+  mainChartInst=new Chart(document.getElementById('mainChart'),{type:'bar',data:{labels:labels,datasets:[{label:'Total',data:totals,backgroundColor:periods.map(function(_,i){return i>=recentIdx?NAVY:GREY;}),borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return '\u00a3'+c.raw.toLocaleString('en-GB');}}}},scales:{x:{grid:{display:false},ticks:{font:{size:11},color:'#666'}},y:{grid:{color:'#f0f2f5'},ticks:{callback:function(v){return fmtK(v);},font:{size:11},color:'#666'},border:{display:false}}}}});
+  smChartInsts.forEach(function(c){c.destroy();});smChartInsts=[];
+  var sm=document.getElementById('smallMultiples');sm.innerHTML='';
+  GROUPS.forEach(function(group){
+    var vals=periods.map(function(p){return groupTotal(group,p);});
+    var div=document.createElement('div');div.className='sm-card';
+    var wrap=document.createElement('div');wrap.className='sm-wrap';
+    var canvas=document.createElement('canvas');
+    div.innerHTML='<div class="sm-title">'+group.label+'</div>';
+    wrap.appendChild(canvas);div.appendChild(wrap);sm.appendChild(div);
+    var inst=new Chart(canvas,{type:'bar',data:{labels:labels,datasets:[{data:vals,backgroundColor:periods.map(function(_,i){return i>=recentIdx?NAVY:GREY;}),borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return '\u00a3'+c.raw.toLocaleString('en-GB');}}}},scales:{x:{grid:{display:false},ticks:{font:{size:9},color:'#666'}},y:{grid:{color:'#f0f2f5'},ticks:{callback:function(v){return fmtK(v);},font:{size:9},color:'#666'},border:{display:false}}}}});
+    smChartInsts.push(inst);
+  });
+}
 async function load(){
   try{
-    const res = await fetch('/api/trend').then(r=>r.json());
-    if(!res.success){ if(res.error==='session_expired') location.href='/login.html'; return; }
-    const data = res.data;
-    const periods = [...new Set(data.map(r=>r.period_date.substring(0,7)))].sort();
-    const labels = periods.map(p=>fmtMonth(p+'-01'));
-    const totals = periods.map(p=>{
-      let t=0;
-      GROUPS.forEach(g=>{
-        data.filter(r=>r.period_date.substring(0,7)===p && r.section===g)
-            .forEach(r=>{ t += CREDIT_GROUPS.has(g) ? -r.total : r.total; });
-      });
-      return Math.round(t);
-    });
+    var res=await fetch('/api/trend').then(function(r){return r.json();});
+    if(!res.success){if(res.error==='session_expired')location.href='/login';return;}
+    allData=res.data;
+    var now=new Date();
+    document.getElementById('month-to').value=toMS(now);
+    document.getElementById('last-loaded').textContent='Updated '+now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
     document.getElementById('loading').style.display='none';
     document.getElementById('content').style.display='block';
-    new Chart(document.getElementById('mainChart'),{
-      type:'bar',
-      data:{labels,datasets:[{label:'Total Cost',data:totals,backgroundColor:periods.map((_,i)=>i>=periods.length-8?NAVY:GREY),borderRadius:2}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'\u00a3'+c.raw.toLocaleString('en-GB')}}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#f0f2f5'},ticks:{callback:v=>fmtK(v),font:{size:10}},border:{display:false}}}}
-    });
-    const sm = document.getElementById('smallMultiples');
-    GROUPS.forEach(group=>{
-      const vals = periods.map(p=>{
-        let t=0;
-        data.filter(r=>r.period_date.substring(0,7)===p && r.section===group)
-            .forEach(r=>{ t+=CREDIT_GROUPS.has(group)?-r.total:r.total; });
-        return Math.round(t);
-      });
-      const div=document.createElement('div'); div.className='sm-card';
-      const wrap=document.createElement('div'); wrap.className='sm-wrap';
-      const canvas=document.createElement('canvas');
-      div.innerHTML='<div class="sm-title">'+group+'</div>';
-      wrap.appendChild(canvas); div.appendChild(wrap); sm.appendChild(div);
-      new Chart(canvas,{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:periods.map((_,i)=>i>=periods.length-8?NAVY:GREY),borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'\u00a3'+c.raw.toLocaleString('en-GB')}}},scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:'#f0f2f5'},ticks:{callback:v=>fmtK(v),font:{size:9}},border:{display:false}}}}});
-    });
-  } catch(e){ document.getElementById('loading').textContent='Failed to load: '+e.message; }
+    renderCharts();
+  }catch(e){document.getElementById('loading').innerHTML='<span style="color:#dc2626">Failed to load: '+e.message+'</span>';}
 }
 load();
 </script>
